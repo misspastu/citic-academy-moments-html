@@ -172,6 +172,8 @@ export default {
         posts{
           post_id
           status_id
+          media_type
+          deployed_at
           editor{
             editor_id
             name
@@ -183,6 +185,14 @@ export default {
           }
           images{
             url
+          }
+          link{
+            title
+            url
+            image{
+              url
+            }
+            link_id
           }
         }
       }`,
