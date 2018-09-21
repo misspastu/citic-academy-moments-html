@@ -57,12 +57,32 @@
                 figure{
                   margin: 0;
                   width: 33.3%;
+                  max-width: 40vw;
+                  height: 40vw;
                   img{
                     width: 100%;
+                    object-fit: cover;
                     display: block;
                   }
                 }
               }
+            }
+          }
+          .link{
+            display: flex;
+            background: #d5d5d5;
+            text-decoration: none;
+            color: #000;
+            font-size: 1rem;
+            padding: .5rem;
+            align-items: center;
+            img{
+              width: 2rem;
+              height: 2rem;
+              display: block;
+            }
+            >div{
+              margin-left: .5rem;
             }
           }
           .publish-time{
@@ -96,11 +116,15 @@
           <div class="list-right-header">
             <div class="title">{{item.editor.name}}</div>
             <div class="publish">{{item.content}}</div>
-            <div class="pic-list">
-              <vue-preview :slides="slide1" @close="handleClose"/>
+            <div class="pic-list" v-if="item.media_type==='imageArr'">
+              <vue-preview :slides="item.images" @close="handleClose"/>
             </div>
+            <a class="link" :href="item.link.url" v-else-if="item.media_type==='linkObj'">
+              <img :src="item.link.image.small_url"/>
+              <div>{{item.link.title}}</div>
+            </a>
             <div class="publish-time">
-              <div class="time">{{item.deployed_at}}</div>
+              <div class="time">{{item.deployed_at | time}}</div>
             </div>
           </div>
         </div>
@@ -120,45 +144,7 @@ export default {
   data() {
     return {
       posts: [],
-      url: 'http://img.zcool.cn/community/0117e2571b8b246ac72538120dd8a4.jpg@1280w_1l_2o_100sh.jpg',
-      pic: 'https://public.yunpub.cn/citic-academy-moments/848c6b6b62e8b2bd41ced3fcb3883b0c.jpg',
-      slide1: [
-        {
-          src: 'https://farm6.staticflickr.com/5591/15008867125_68a8ed88cc_b.jpg',
-          msrc: 'https://farm6.staticflickr.com/5591/15008867125_68a8ed88cc_m.jpg',
-          alt: 'picture1',
-          w: 600,
-          h: 400
-        },
-        {
-          src: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_b.jpg',
-          msrc: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_m.jpg',
-          alt: 'picture2',
-          w: 1200,
-          h: 900
-        },
-        {
-          src: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_b.jpg',
-          msrc: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_m.jpg',
-          alt: 'picture2',
-          w: 1200,
-          h: 900
-        },
-        {
-          src: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_b.jpg',
-          msrc: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_m.jpg',
-          alt: 'picture2',
-          w: 1200,
-          h: 900
-        },
-        {
-          src: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_b.jpg',
-          msrc: 'https://farm4.staticflickr.com/3902/14985871946_86abb8c56f_m.jpg',
-          alt: 'picture2',
-          w: 1200,
-          h: 900
-        }
-      ]
+      url: 'http://img.zcool.cn/community/0117e2571b8b246ac72538120dd8a4.jpg@1280w_1l_2o_100sh.jpg'
     }
   },
   methods: {
@@ -174,6 +160,7 @@ export default {
           status_id
           media_type
           deployed_at
+          content
           editor{
             editor_id
             name
@@ -185,20 +172,39 @@ export default {
           }
           images{
             url
+            small_url
           }
           link{
             title
             url
             image{
               url
+              small_url
             }
-            link_id
           }
         }
       }`,
     ).then(data => {
       if (data && data.posts) {
-        this.posts = data.posts
+        (async ()=> {
+          for (let item of data.posts) {
+            if (item.media_type === 'imageArr') {
+              for (let img of item.images) {
+                let imgs = new Image()
+                imgs.src = img.url
+                imgs.onload = () => {
+                  img.src = img.url // 大图
+                  img.msrc = img.small_url // 缩略图
+                  img.w = imgs.width
+                  img.h = imgs.height
+                }
+              }
+            }
+          }
+        })()
+        setTimeout(() => {
+          this.posts = data.posts
+        }, 1000)
       }
     })
   }
