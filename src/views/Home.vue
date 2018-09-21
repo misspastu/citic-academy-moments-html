@@ -2,7 +2,8 @@
 .home{
   .home-header{
     width: 100%;
-    height: 50vw;
+    height: 61.6vw;
+    background: url('../assets/images/bg.png') no-repeat;
     background-size: 100% 100%;
     position: relative;
     img{
@@ -25,11 +26,13 @@
   .home-content{
     background: #fff;
     padding: 1.25rem;
+    box-sizing: border-box;
     .list{
       display: flex;
+      margin-bottom: .5rem;
       .list-left{
-        width: 2rem;
-        height: 2rem;
+        width: 11vw;
+        height: 11vw;
         margin-right: .5rem;
         img{
           display: block;
@@ -43,9 +46,45 @@
           .title{
             color: #576b95;
             font-size: 1.2rem;
+            margin-bottom: .5rem;
           }
           .publish{
             font-size: 1.2rem;
+            line-height: 1.4;
+            margin-bottom: .5rem;
+          }
+          figure{
+            margin: 0;
+          }
+          .one_img_height img{
+            height: 47.2vw;
+          }
+          .one_img_width img {
+            width: 47.2vw;
+          }
+          .one_img img {
+            width: 47.2vw;
+            height: 47.2vw;
+          }
+          .four_img {
+            .my-gallery{
+              display: flex;
+              flex-wrap: wrap;
+            }
+            figure{
+              width: 22vw;
+              height: 22vw;
+              margin: 2.6vw 1.3vw 0 0;
+              &:nth-child(2n){
+                margin-right: 22vw;
+              }
+              img{
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+              }
+            }
           }
           .pic-list{
             display: flex;
@@ -55,12 +94,12 @@
                 display: flex;
                 flex-wrap: wrap;
                 figure{
-                  margin: 0;
-                  width: 33.3%;
-                  max-width: 40vw;
-                  height: 40vw;
+                  width: 22vw;
+                  height: 22vw;
+                  margin: 2.6vw 1.3vw 0 0;
                   img{
                     width: 100%;
+                    height: 100%;
                     object-fit: cover;
                     display: block;
                   }
@@ -103,59 +142,41 @@
 </style>
 <template>
   <div class="home">
-    <div class="home-header" :style="{backgroundImage: 'url(' + url + ')' }">
+    <div class="home-header">
       <img src="https://public.yunpub.cn/citic-academy-moments/848c6b6b62e8b2bd41ced3fcb3883b0c.jpg">
       <span class="user-name">sunny</span>
     </div>
-    <div class="home-content">
-      <div v-for="(item, index) in posts" :key="index" class="list">
-        <div class="list-left">
-          <img :src="item.editor.avatar.small_url">
-        </div>
-        <div class="list-right">
-          <div class="list-right-header">
-            <div class="title">{{item.editor.name}}</div>
-            <div class="publish">{{item.content}}</div>
-            <div class="pic-list" v-if="item.media_type==='imageArr'">
-              <vue-preview :slides="item.images" @close="handleClose"/>
-            </div>
-            <a class="link" :href="item.link.url" v-else-if="item.media_type==='linkObj'">
-              <img :src="item.link.image.small_url"/>
-              <div>{{item.link.title}}</div>
-            </a>
-            <div class="publish-time">
-              <div class="time">{{item.deployed_at | time}}</div>
+      <mescroll-vue class="home-content" ref="mescroll" :down="mescrollDown" :up="mescrollUp" @init="mescrollInit">
+        <div v-for="(item, index) in dataList" :key="index" class="list">
+          <div class="list-left">
+            <img :src="item.editor.avatar.small_url">
+          </div>
+          <div class="list-right">
+            <div class="list-right-header">
+              <div class="title">{{item.editor.name}}</div>
+              <div class="publish">{{item.content}}</div>
+              <div :class='className(item.images)' v-if="item.media_type==='imageArr' && item.images[0].msrc">
+                <vue-preview :slides="item.images" @close="handleClose"/>
+              </div>
+              <a class="link" :href="item.link.url" v-else-if="item.media_type==='linkObj'">
+                <img :src="item.link.image.small_url"/>
+                <div>{{item.link.title}}</div>
+              </a>
+              <div class="publish-time">
+                <div class="time">{{item.deployed_at | time}}</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </mescroll-vue>
   </div>
 </template>
 
 <script>
 import HelloWorld from '@/components/HelloWorld.vue'
-
-export default {
-  name: 'home',
-  components: {
-    HelloWorld
-  },
-  data() {
-    return {
-      posts: [],
-      url: 'http://img.zcool.cn/community/0117e2571b8b246ac72538120dd8a4.jpg@1280w_1l_2o_100sh.jpg'
-    }
-  },
-  methods: {
-    handleClose () {
-      console.log('close event')
-    }
-  },
-  created() {
-    this.$utils.query(
-      `query OnApp {
-        posts{
+import MescrollVue from 'mescroll.js/mescroll.vue'
+const query = `query OnApp ($limit: Int, $offset: Int){
+        posts(limit: $limit, offset: $offset){
           post_id
           status_id
           media_type
@@ -183,30 +204,121 @@ export default {
             }
           }
         }
-      }`,
-    ).then(data => {
-      if (data && data.posts) {
-        (async ()=> {
-          for (let item of data.posts) {
+      }`
+export default {
+  name: 'home',
+  components: {
+    HelloWorld,
+    MescrollVue
+  },
+  data() {
+    return {
+      posts: [],
+      mescroll: null, // mescroll实例对象
+      mescrollDown:{
+        callback: this.downCallback,
+      },
+      mescrollUp: {
+        callback: this.upCallback,
+        noMoreSize: 5,
+        toTop: { // 回到顶部按钮
+					src: "https://public.yunpub.cn/citic-academy-moments/569cc33b3bf43cfe5810cea2b4a27c57.jpg", //图片路径,默认null,支持网络图
+          offset: 10, //列表滚动1000px才显示回到顶部按钮
+          warpId: null, 
+          html: null, 
+          warpClass: "mescroll-totop", 
+          showClass: "mescroll-fade-in", 
+          hideClass: "mescroll-fade-out", 
+          duration: 300, 
+          supportTap: false
+				},
+      },
+      dataList: []
+    }
+  },
+  beforeRouteEnter (to, from, next) { // 如果没有配置回到顶部按钮或isBounce,则beforeRouteEnter不用写
+    next(vm => {
+      vm.$refs.mescroll.beforeRouteEnter() // 进入路由时,滚动到原来的列表位置,恢复回到顶部按钮和isBounce的配置
+    })
+  },
+  beforeRouteLeave (to, from, next) { // 如果没有配置回到顶部按钮或isBounce,则beforeRouteLeave不用写
+    this.$refs.mescroll.beforeRouteLeave() // 退出路由时,记录列表滚动的位置,隐藏回到顶部按钮和isBounce的配置
+    next()
+  },
+  methods: {
+    mescrollInit (mescroll) {
+      this.mescroll = mescroll
+    },
+    upCallback () {
+      this.getData()
+    },
+    downCallback() {
+    },
+    handleClose () {
+      console.log('close event')
+    },
+    getData() {
+      this.$utils.query(query,
+      {
+        limit: 10,
+        offset: this.posts.length
+      }
+      ).then(data => {
+        if (data && data.posts) {
+          const result = []
+          for (const item of data.posts) {
             if (item.media_type === 'imageArr') {
-              for (let img of item.images) {
+              if (item.images.length == 1) {
+                let pic = new Image()
+                pic.src = item.images[0].small_url
+                pic.onload = () => {
+                  item.images[0].percent = (pic.width / pic.height)
+                }
+              }
+              for (let i in item.images) {
                 let imgs = new Image()
-                imgs.src = img.url
+                imgs.src = item.images[i].url
                 imgs.onload = () => {
-                  img.src = img.url // 大图
-                  img.msrc = img.small_url // 缩略图
-                  img.w = imgs.width
-                  img.h = imgs.height
+                  item.images[i].src = item.images[i].url // 大图
+                  item.images[i].msrc = item.images[i].small_url // 缩略图
+                  item.images[i].w = imgs.width
+                  item.images[i].h = imgs.height
                 }
               }
             }
+            result.push(item)
           }
-        })()
-        setTimeout(() => {
-          this.posts = data.posts
-        }, 1000)
+          setTimeout(() => { // 我再想想有没有别的解决方法
+            // this.posts = result
+            this.dataList = this.dataList.concat(result)
+            this.$nextTick(() => {
+              this.mescroll.endSuccess(result.length)
+              // this.mescroll.endSuccess(result.length, false)
+              // this.mescroll.endBySize(result.length, 10) // 自动判断列表如果无任何数据,则提示空;列表无下一页数据,则提示无更多数据
+            })
+          }, 1000)
+        }
+      })
+    },
+    className(imagesList) {
+      const len = imagesList.length
+      if (len == 1) {
+        const percent = imagesList[0].percent
+        if (percent > 1) {
+          return 'one_img_width'
+        } else if (percent < 1) {
+          return 'one_img_height'
+        } else {
+          return 'one_img'
+        }
+      } else if (len == 4) {
+        return 'four_img'
+      } else {
+        return 'pic-list'
       }
-    })
+    }
+  },
+  created() {
   }
 }
 </script>
