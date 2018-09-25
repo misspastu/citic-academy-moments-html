@@ -1,5 +1,6 @@
 <style lang="less">
 .home{
+  -webkit-overflow-scrolling: touch;
   .home-header{
     width: 100%;
     height: 61.6vw;
@@ -14,6 +15,7 @@
       background: #fff;
       right: 2rem;
       bottom: -1.5rem;
+      border: solid 1px #dbdbdb;
     }
     .user-name{
       position: absolute;
@@ -25,15 +27,17 @@
   }
   .home-content{
     background: #fff;
-    padding: 1.25rem;
+    padding-top: 1.25rem;
     box-sizing: border-box;
     .list{
       display: flex;
       margin-bottom: .5rem;
+      position: relative;
+      padding: 0.833rem;
       .list-left{
-        width: 11vw;
-        height: 11vw;
-        margin-right: .5rem;
+        width: 10.6vw;
+        height: 10.6vw;
+        margin-right: .833rem;
         img{
           display: block;
           width: 100%;
@@ -45,12 +49,12 @@
         .list-right-header{
           .title{
             color: #576b95;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             margin-bottom: .5rem;
           }
           .publish{
-            font-size: 1.2rem;
-            line-height: 1.4;
+            font-size: 1.25rem;
+            line-height: 1.5;
             margin-bottom: .5rem;
           }
           figure{
@@ -122,6 +126,7 @@
             }
             >div{
               margin-left: .5rem;
+              line-height: 1.5;
             }
           }
           .publish-time{
@@ -130,12 +135,29 @@
             align-items: center;
             margin: .5rem 0;
             .time{
-              font-size: 1rem;
+              font-size: 1.08rem;
               color: #b1b1b1;
             }
           }
         }
       }
+    }
+    .list::after{
+      content: '';
+      width: 200%;
+      height: 0;
+      box-sizing: border-box;
+      position: absolute;
+      // top: 0;
+      left: 0;
+      bottom: 0;
+      border-bottom: 1px solid #d5d5d5;
+      border-radius: 4px;
+      transform: scale(0.5, 0.5);
+      transform-origin: top left;
+    }
+    .list:last-child::after{
+      border: none;
     }
   }
 }
@@ -173,7 +195,6 @@
 </template>
 
 <script>
-import HelloWorld from '@/components/HelloWorld.vue'
 import MescrollVue from 'mescroll.js/mescroll.vue'
 const query = `query OnApp ($limit: Int, $offset: Int){
         posts(limit: $limit, offset: $offset){
@@ -208,7 +229,6 @@ const query = `query OnApp ($limit: Int, $offset: Int){
 export default {
   name: 'home',
   components: {
-    HelloWorld,
     MescrollVue
   },
   data() {
@@ -261,7 +281,7 @@ export default {
       this.$utils.query(query,
       {
         limit: 10,
-        offset: this.posts.length
+        offset: this.dataList.length
       }
       ).then(data => {
         if (data && data.posts) {
