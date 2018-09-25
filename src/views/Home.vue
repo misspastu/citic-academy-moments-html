@@ -16,6 +16,7 @@
       right: 2rem;
       bottom: -1.5rem;
       border: solid 1px #dbdbdb;
+      z-index: 1;
     }
     .user-name{
       position: absolute;
@@ -133,7 +134,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: .5rem 0;
+            margin: .883rem 0 0.5rem 0;
             .time{
               font-size: 1.08rem;
               color: #b1b1b1;
@@ -270,9 +271,11 @@ export default {
       this.mescroll = mescroll
     },
     upCallback () {
+      console.log('upCallback')
       this.getData()
     },
     downCallback() {
+      console.log('downCallback')
     },
     handleClose () {
       console.log('close event')
@@ -312,7 +315,7 @@ export default {
             // this.posts = result
             this.dataList = this.dataList.concat(result)
             this.$nextTick(() => {
-              this.mescroll.endSuccess(result.length)
+              // this.mescroll.endSuccess(result.length)
               // this.mescroll.endSuccess(result.length, false)
               // this.mescroll.endBySize(result.length, 10) // 自动判断列表如果无任何数据,则提示空;列表无下一页数据,则提示无更多数据
             })
